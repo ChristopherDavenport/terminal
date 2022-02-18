@@ -6,10 +6,6 @@ import scala.scalajs.js.annotation.{JSGlobalScope, JSGlobal, JSImport, JSName, J
 
 private[terminal] object stdoutMod {
 
-  // @JSImport("tty", JSImport.Namespace)
-  // @js.native
-  // val ^ : js.Any = js.native
-
   def stdout =
     js.Dynamic.global.process.stdout.asInstanceOf[WriteStream]
 

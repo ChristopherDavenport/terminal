@@ -34,10 +34,10 @@ object VirtualLineTerminal {
 
   case class State(
     lines: List[(Unique.Token, LineFunction)], // 
-    rendered: fansi.Str // todo store and only render diff for now if different then render
+    rendered: Option[(fansi.Str, Size)] // todo store and only render diff for now if different then render
   )
   object State {
-    def empty = State(List.empty, Str(""))
+    def empty = State(List.empty, None)
   }
 
 
@@ -72,21 +72,23 @@ object VirtualLineTerminal {
       State(newLines, state.rendered)
     }
 
-    private def renderNeed(size: Size): F[Option[(fansi.Str, fansi.Str)]] = ref.modify{state => 
+    private def renderNeed(size: Size): F[Option[(Option[(fansi.Str, Size)], (fansi.Str, Size))]] = ref.modify{state => 
       val out = internalRender(state.lines, size)
       if (out == state.rendered) state ->  None
-      else (state.copy(rendered = out),  (state.rendered, out).some)
+      else (state.copy(rendered = Some(out, size)),  (state.rendered, (out, size)).some)
     }
 
     def render: F[Unit] = signal.get.flatMap(size => 
       renderNeed(size).flatMap(opt => 
         opt.traverse_{
-          case (old, s) =>
+          case (None, (s, _)) => 
+            val out = s.render
+            Console[F].print(out)
+          case (Some((old, _)), (s, _)) => // TODO more complex logic to get overflow/underflow of vertical space right
             val oldLinesCount = old.plainText.split("\n").length - 1 
             val linesCount = s.plainText.split("\n").length - 1
             val preface = {
-              if (old.plainText == "") ""
-              else s"\u001b[${oldLinesCount + 1}F"
+              s"\u001b[${oldLinesCount + 1}F"
             }
             val out = preface ++ s.render
             Console[F].print(out)

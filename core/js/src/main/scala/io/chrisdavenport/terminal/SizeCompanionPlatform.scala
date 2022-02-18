@@ -23,17 +23,15 @@ trait SizeCompanionPlatform {
 
   private def unsafeSize: Size = {
     val stdout = jsshims.stdoutMod.stdout
-    println(s"Made it past stdout $stdout")
-
-    val linesDouble = stdout.rows
-    println("Made it past lines")
-
-    val colsDouble = stdout.columns
-    
-    println("Made it past cols and rows")
-    val cols = colsDouble.toInt
-    val lines = linesDouble.toInt
-    Size(cols, lines)
+    try {
+      val linesDouble = stdout.rows
+      val colsDouble = stdout.columns
+      val cols = colsDouble.toInt
+      val lines = linesDouble.toInt
+      Size(cols, lines)
+    } catch {
+      case e: Throwable => throw new Throwable("Not a TTY - Cannot get Size (are you in sbt???)", e)
+    }
   } 
 
   private class DeferredChain[F[_]: Async, A](private val ref: UnsafeRef[UnsafeDeferred[F, A]], f: () => A){
