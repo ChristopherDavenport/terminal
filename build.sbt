@@ -27,7 +27,6 @@ lazy val core = crossProject(JVMPlatform, JSPlatform)
   .in(file("core"))
   .settings(
     name := "terminal",
-
     libraryDependencies ++= Seq(
       "org.typelevel"               %%% "cats-core"                  % catsV,
       "org.typelevel"               %%% "cats-effect"                % catsEffectV,
@@ -43,8 +42,24 @@ lazy val core = crossProject(JVMPlatform, JSPlatform)
 
     )
   ).jsSettings(
-    scalaJSUseMainModuleInitializer := true,
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule)},
+  )
+
+lazy val examples = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .disablePlugins(MimaPlugin)
+  .enablePlugins(NoPublishPlugin)
+  .in(file("examples"))
+  .dependsOn(core)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.http4s" %%% "http4s-ember-client" % "0.23.6",
+      "io.chrisdavenport" %%% "progressbar" % "0.0.0+238-0d0252da+20220219-0944-SNAPSHOT"
+    )
+  )
+  .jsSettings(
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule)},
+    scalaJSUseMainModuleInitializer := true,
   )
 
 lazy val site = project.in(file("site"))
